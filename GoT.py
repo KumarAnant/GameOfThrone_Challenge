@@ -8,6 +8,7 @@ import math
 import os
 os.chdir('E:/OneDrive/Hult/Machine Learning/Assignments/Assignment - 2')
 got = pd.read_excel('Data/GOT_character_predictions.xlsx', index_col = 0)
+got.sort_index(inplace=True)
 
 ## Get some basic information of the dtaframe
 print(got.info())
@@ -57,9 +58,14 @@ for cols in missing_cols:
     missing_summary.loc[cols, '% Unique values'] = int((len(got[cols].unique()))/(len(got[cols].dropna()))*100)
 print(missing_summary)
 
-## Create a variable for book number
-got['bookNo'] = 10000*got['book1_A_Game_Of_Thrones'] + 1000*got['book2_A_Clash_Of_Kings'] + 100*got['book3_A_Storm_Of_Swords'] + 10*got['book4_A_Feast_For_Crows'] + got['book5_A_Dance_with_Dragons']
-
+## Create a variable for book number. If the character did not appear in any of the book, he/she must have
+## appeared in book number 6
+got['bookNo'] = got['book1_A_Game_Of_Thrones'] + \
+                got['book2_A_Clash_Of_Kings'] + \
+                got['book3_A_Storm_Of_Swords'] + \
+                got['book4_A_Feast_For_Crows'] + \
+                got['book5_A_Dance_with_Dragons']
+got['bookNo'] = got['bookNo'].apply(lambda X: 6 if X == 0 else X)
 
 ## Function ot check if a value passed is null to set it as "Unknown" in dataframe
 def checkNUll(val):
@@ -76,19 +82,46 @@ def checkNUll(val):
 drop_cols = []
 
 ####### title ###########
-## Check distribution of unique culture
-print(got['title'].value_counts())
-
+## Check distribution of unique title
 ## column title is 51% missing with 28% unique records, missing 
 ## value wil be replaced with 'Unknown'
-got['title'] = got['title'].apply(lambda X: checkNUll(X))
-print(got['title'].isnull().any())
+
+title_list = got['title'].value_counts()
+min_acceptable_title_count = 10
+## Anything less than the accepted count will be treated 
+## as "Other" title, to reduct variability of the dataframe. 
+## Save the transofmed data in column mod_title
+got['mod_tile'] = " "
+for count in range(1, got.shape[0]+1):
+    if (got.loc[count, 'title'] != got.loc[count, 'title']):
+        got.loc[count, 'mod_title'] = "Unknown"
+        # print(count, got.loc[count, 'T_title'])
+    elif (title_list.loc[got.loc[count, 'title']] < min_acceptable_title_count):
+        got.loc[count, 'mod_title'] = "Other"
+        # print(count, got.loc[count, 'T_title'])
+    else:
+        got.loc[count, 'mod_title'] = got.loc[count, 'title']
+print(got['mod_title'].isnull().any())
 
 
 ## column culture is 65% missing with 9% unique records, 
 ## missing value can replaced with 'Unknown' tag
-got['culture'] = got['culture'].apply(lambda X: checkNUll(X))
-print(got['culture'].isnull().any())
+culture_list = got['culture'].value_counts()
+min_acceptable_culture_count = 10
+## Anything less than the accepted count (10) will be treated 
+## as "Other" culture, to reduct variability of the dataframe. 
+got['mod_culture'] = " "
+for count in range(1, got.shape[0]+1):
+    if (got.loc[count, 'culture'] != got.loc[count, 'culture']):
+        got.loc[count, 'mod_culture'] = "Unknown"
+        # print(count, got.loc[count, 'T_title'])
+    elif (culture_list.loc[got.loc[count, 'culture']] < min_acceptable_culture_count):
+        got.loc[count, 'mod_culture'] = "Other"
+        # print(count, got.loc[count, 'T_title'])
+    else:
+        got.loc[count, 'mod_culture'] = got.loc[count, 'culture']
+print(got['mod_culture'].isnull().any())
+
 
 ## DateOfBirth being overall 77% missing and also that another
 ## column of Age is already available, the BirthDay column can be dropped
