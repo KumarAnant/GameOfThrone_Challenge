@@ -59,7 +59,6 @@ print(missing_summary)
 
 ## Create a variable for book number
 got['bookNo'] = 10000*got['book1_A_Game_Of_Thrones'] + 1000*got['book2_A_Clash_Of_Kings'] + 100*got['book3_A_Storm_Of_Swords'] + 10*got['book4_A_Feast_For_Crows'] + got['book5_A_Dance_with_Dragons']
-sns.boxplot(hue = 'bookNo', y = 'age', date = got)
 
 
 ## Function ot check if a value passed is null to set it as "Unknown" in dataframe
@@ -106,6 +105,65 @@ drop_cols.append('father')
 ## column heir is almost 100% missing and it is a qualitative datta
 ## can not be imputed, hence be dropped
 drop_cols.append('heir')
+
+#### Imputing house data for some characters, source online various
+houses = {   'House Baratheon':  ['Tommen Baratheon', 
+                                'Joffrey Baratheon',
+                                'Stannis Baratheon'],
+            'House Durrandon':  ['Arrec Durrandon'],
+            'House Florent':    ['Omer Florent'],
+            'House Greyjoy':    ['Euron Greyjoy',
+                                'Balon Greyjoy'],
+            'House Hoare':      ['Harrag Hoare'],
+            'House Lannister':  ['Genna Lannister',
+                                'Lancel V Lannister'],
+            'House Martell':    ['Elia Martell'],
+            'House Mudd':       ['Tristifer IV Mudd',
+                                'Tristifer V Mudd'],
+            'House Stark':      ['Bessa [Winterfell',
+                                'Benjen Stark [Bitter]',
+                                'Brandon Stark [Burner]',
+                                'Brandon Stark [Shipwright]',
+                                'Benjen Stark [Sweet]',
+                                'Torrhen Stark',
+                                'Robb Stark',
+                                'Theon Stark'],
+            'House Targaryen':  ['Aerys I Targaryen',
+                                'Aegon I Targaryen',
+                                'Aenys I Targaryen',
+                                'Viserys I Targaryen',
+                                'Baelor I Targaryen',
+                                'Maegor I Targaryen',
+                                'Aegon II Targaryen',
+                                'Daeron II Targaryen',
+                                'Viserys II Targaryen',
+                                'Jaehaerys II Targaryen',
+                                'Aegon III Targaryen',
+                                'Aegon IV Targaryen',
+                                'Alysanne Targaryen',
+                                'Aegon V Targaryen'],
+            'House Tyrell':     ['Medwick Tyrell',
+                                'Normund Tyrell'],
+            'House Woodwright': ['Lucantine Woodwright',
+                                'Portifer Woodwright'],
+            'Kemmett Pyke':     ['Kemmett Pyke']
+            }
+
+nrow = 0
+for nrow in np.arange(1, got.shape[0]):
+    if(got.loc[nrow, 'house'] != got.loc[nrow, 'house']):
+        for house, names in houses.items():
+            if got.loc[nrow, 'name'] in names:
+                got.loc[nrow, 'house'] = house
+                break
+            else:
+                got.loc[nrow, 'house'] = 'Unknown'
+            
+got.loc[212, 'house']
+for house, names in houses.items():
+            if got.loc[6, 'name'] in names:
+                got.loc[6, 'house'] = house
+                print(got.loc[6, 'house'])
 
 
 
