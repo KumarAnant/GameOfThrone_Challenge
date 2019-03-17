@@ -58,15 +58,6 @@ for cols in missing_cols:
     missing_summary.loc[cols, '% Unique values'] = int((len(got[cols].unique()))/(len(got[cols].dropna()))*100)
 print(missing_summary)
 
-## Create a variable for book number. If the character did not appear in any of the book, he/she must have
-## appeared in book number 6
-got['bookNo'] = got['book1_A_Game_Of_Thrones'] + \
-                got['book2_A_Clash_Of_Kings'] + \
-                got['book3_A_Storm_Of_Swords'] + \
-                got['book4_A_Feast_For_Crows'] + \
-                got['book5_A_Dance_with_Dragons']
-got['bookNo'] = got['bookNo'].apply(lambda X: 6 if X == 0 else X)
-
 ## Function ot check if a value passed is null to set it as "Unknown" in dataframe
 def checkNUll(val):
     if val == val:
@@ -86,23 +77,24 @@ drop_cols = []
 ## column title is 51% missing with 28% unique records, missing 
 ## value wil be replaced with 'Unknown'
 
-title_list = got['title'].value_counts()
+title_list = got['title'].value_counts()    
 min_acceptable_title_count = 10
 ## Anything less than the accepted count will be treated 
 ## as "Other" title, to reduct variability of the dataframe. 
 ## Save the transofmed data in column mod_title
-got['mod_tile'] = " "
+got['mod_title'] = " "
 for count in range(1, got.shape[0]+1):
+    ## Impute values in new column for missing values in original column
     if (got.loc[count, 'title'] != got.loc[count, 'title']):
         got.loc[count, 'mod_title'] = "Unknown"
-        # print(count, got.loc[count, 'T_title'])
+    # Impute values for columns with less than accetable freuency counts
     elif (title_list.loc[got.loc[count, 'title']] < min_acceptable_title_count):
         got.loc[count, 'mod_title'] = "Other"
-        # print(count, got.loc[count, 'T_title'])
+    # Copy all other values from original column
     else:
         got.loc[count, 'mod_title'] = got.loc[count, 'title']
 print(got['mod_title'].isnull().any())
-
+print('Total ', len(got['mod_title'].unique()),' titles')
 
 ## column culture is 65% missing with 9% unique records, 
 ## missing value can replaced with 'Unknown' tag
@@ -112,16 +104,17 @@ min_acceptable_culture_count = 10
 ## as "Other" culture, to reduct variability of the dataframe. 
 got['mod_culture'] = " "
 for count in range(1, got.shape[0]+1):
+    ## Impute values in new column for missing values in original column
     if (got.loc[count, 'culture'] != got.loc[count, 'culture']):
         got.loc[count, 'mod_culture'] = "Unknown"
-        # print(count, got.loc[count, 'T_title'])
+    # Impute values for columns with less than accetable freuency counts
     elif (culture_list.loc[got.loc[count, 'culture']] < min_acceptable_culture_count):
         got.loc[count, 'mod_culture'] = "Other"
-        # print(count, got.loc[count, 'T_title'])
+    # Copy all other values from original column
     else:
         got.loc[count, 'mod_culture'] = got.loc[count, 'culture']
 print(got['mod_culture'].isnull().any())
-
+print('Total ', len(got['mod_culture'].unique()),' cultures')
 
 ## DateOfBirth being overall 77% missing and also that another
 ## column of Age is already available, the BirthDay column can be dropped
@@ -139,7 +132,8 @@ drop_cols.append('father')
 ## can not be imputed, hence be dropped
 drop_cols.append('heir')
 
-#### Imputing house data for some characters, source online various
+## House is 22% missing with 348 unique values
+#### Imputing house data for some characters, sourced from various online
 houses = {   'House Baratheon':  ['Tommen Baratheon', 
                                 'Joffrey Baratheon',
                                 'Stannis Baratheon'],
@@ -182,8 +176,9 @@ houses = {   'House Baratheon':  ['Tommen Baratheon',
             'Kemmett Pyke':     ['Kemmett Pyke']
             }
 
-nrow = 0
-for nrow in np.arange(1, got.shape[0]):
+# Impute data in house column based on name of the character in name column
+# Also impute house for missing values as "unknown"
+for nrow in np.arange(1, got.shape[0]+1):
     if(got.loc[nrow, 'house'] != got.loc[nrow, 'house']):
         for house, names in houses.items():
             if got.loc[nrow, 'name'] in names:
@@ -191,15 +186,59 @@ for nrow in np.arange(1, got.shape[0]):
                 break
             else:
                 got.loc[nrow, 'house'] = 'Unknown'
-            
-got.loc[212, 'house']
-for house, names in houses.items():
-            if got.loc[6, 'name'] in names:
-                got.loc[6, 'house'] = house
-                print(got.loc[6, 'house'])
+
+## Check the missing value status
+
+for cols in missing_cols:
+    missing_summary.loc[cols, 'Data Type'] = got[cols].dtype
+    missing_summary.loc[cols, '% Missing'] = (got[cols].isnull().sum() * 100 / len(got[cols])).round(1)    
+    missing_summary.loc[cols, 'Unique Values'] = (len(got[cols].unique()))
+    missing_summary.loc[cols, '% Unique values'] = int((len(got[cols].unique()))/(len(got[cols].dropna()))*100)
+print(missing_summary)
 
 
 
+house_list = got['house'].value_counts()
+min_acceptable_house_count = 15
+## Anything less than the accepted count will be treated 
+## as "Other" house, to reduct variability of the dataframe. 
+## Save the transofmed data in column mod_house
+got['mod_house'] = " "
+for count in range(1, got.shape[0]+1):
+    ## Impute values in new column for missing values in original column
+    if (got.loc[count, 'house'] != got.loc[count, 'house']):
+        got.loc[count, 'mod_house'] = "Unknown"
+    # Impute values for columns with less than accetable freuency counts
+    elif (house_list.loc[got.loc[count, 'house']] < min_acceptable_house_count):
+        got.loc[count, 'mod_house'] = "Other"
+    # Copy all other values from original column
+    else:
+        got.loc[count, 'mod_house'] = got.loc[count, 'house']
+print(got['mod_house'].isnull().any())
+print('Total ', len(got['mod_house'].unique()),' houses')
+
+## Spouse has 92% missing with 255 unique values
+## The spouse which is name of a spouse, may anot have correlationd
+## with model, soo better to drop the colkumn
+drop_cols.append('spouse')
+
+
+## Create a variable for book number. If the character 
+## did not appear in any of the book, he/she must have
+## appeared in book number 6 or subsequent books
+got['appearanceCount'] = got['book1_A_Game_Of_Thrones'] + \
+                got['book2_A_Clash_Of_Kings'] + \
+                got['book3_A_Storm_Of_Swords'] + \
+                got['book4_A_Feast_For_Crows'] + \
+                got['book5_A_Dance_with_Dragons']
+got['appearanceCount'] = got['appearanceCount'].apply(lambda X: 1 if X == 0 else X)
+
+plt.figure(figsize=(30, 18))
+sns.countplot(x = got['appearanceCount'])
+plt.xlabel("Number of books hero appeared in")
+plt.ylabel("Hero Count")
+plt.title("Lead character apperance frequency")
+plt.show()
 # selection = ['Ser', 'Stonehelm', 'Prince']
 # count = 0
 # for count in range(0, got.shape[0]):
