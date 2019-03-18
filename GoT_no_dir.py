@@ -43,8 +43,7 @@ from sklearn.metrics import confusion_matrix, roc_auc_score
 from sklearn.metrics import roc_curve, auc
 from sklearn.model_selection import cross_val_score # k-folds cross validation
 
-import os
-os.chdir('E:/OneDrive/Hult/Machine Learning/Assignments/Assignment - 2')
+
 got = pd.read_excel('Data/GOT_character_predictions.xlsx', index_col = 0)
 got.sort_index(inplace=True)
 
@@ -546,9 +545,7 @@ y = y.loc[:]
 
 
 ## Train and test data split with stratification
-X_test, X_train, y_test, y_train = train_test_split(X, y, stratify = y, 
-                                                    test_size = 0.1,
-                                                    random_state = 508)
+X_test, X_train, y_test, y_train = train_test_split(X, y, stratify = y, test_size = 0.3)
 lm = LogisticRegression()
 lm.fit(X_train, y_train)
 
@@ -567,7 +564,7 @@ cv_lr_3 = cross_val_score(lm,
                           y,
                           cv = 3)
 
-print("Cross validation score of LR: ", (pd.np.mean(cv_lr_3).round(3)))
+print("Cross validation score of LR: ", (pd.np.mean(cv_lr_3)))
 
 
 
@@ -608,9 +605,7 @@ got_feat = pd.DataFrame(scaled_feature, columns=got_OLS.columns[:-1])
 ## Test and train split of data
 X = got_feat
 y = got['isAlive']
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.1, 
-                                                        stratify = y, 
-                                                        random_state = 508)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.3, random_state = 508)
 
 ## KNN Model intiatiate with N value - 1
 knn = KNeighborsClassifier(n_neighbors=1)
@@ -669,7 +664,7 @@ cv_knn_3 = cross_val_score(knn,
                           y,
                           cv = 3)
 
-print("Cross validation score of KNN: ", (pd.np.mean(cv_knn_3).round(3)))
+print("Cross validation score of KNN: ", (pd.np.mean(cv_knn_3)))
 
 
 ## AUC Calculation and plotting
@@ -727,7 +722,7 @@ cv_RandFor_3 = cross_val_score(rfc,
                           y,
                           cv = 3)
 
-print("Cross validation score of RFC: ", (pd.np.mean(cv_RandFor_3)).round(3))
+print("Cross validation score of RFC: ", (pd.np.mean(cv_RandFor_3)))
 
 
 ## AUC Calculation and plotting
@@ -779,7 +774,7 @@ cv_SVC_3 = cross_val_score(grid,
                           y,
                           cv = 3)
 
-print("Cross validation score of SVC: ", (pd.np.mean(cv_SVC_3)).round(3))
+print("Cross validation score of SVC: ", (pd.np.mean(cv_SVC_3)))
 
 
 #############################################
@@ -819,7 +814,7 @@ cv_GBC_3 = cross_val_score(gbm,
                           y,
                           cv = 3)
 
-print("Cross validation score of GBC: ", (pd.np.mean(cv_GBC_3)).round(3))
+print("Cross validation score of GBC: ", (pd.np.mean(cv_GBC_3)))
 
 
 ## AUC Calculation and plotting
