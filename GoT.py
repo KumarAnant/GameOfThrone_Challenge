@@ -243,17 +243,35 @@ plt.show()
 
 got['firstBook'] = np.nan
 ## Create a variable for the sequence of books a character has appaeared in
-got['bookSequence'] =   got['book1_A_Game_Of_Thrones']*10000 + \
-                        got['book2_A_Clash_Of_Kings']*2000 + \
-                        got['book3_A_Storm_Of_Swords']*300 +\
-                        got['book4_A_Feast_For_Crows']*40 +\
-                        got['book5_A_Dance_with_Dragons']*5
-got['bookSequence'] = got['bookSequence'].apply(lambda X: 6 if X == 0 else X)
+def getBookSeq(book1, book2, book3, book4, book5):
+    bookSeq = 0
+    if(book1 != 0):
+        bookSeq = bookSeq*10 + book1
+    if(book2 != 0):
+        bookSeq = bookSeq*10 + book2*2
+    if(book3 != 0):
+        bookSeq = bookSeq*10 + book3*3
+    if(book4 != 0):
+        bookSeq = bookSeq*10 + book4*4
+    if(book5 != 0):
+        bookSeq = bookSeq*10 + book5*5
+    if((book1 + book2 + book3 + book4 + book5)  == 0):
+        bookSeq = 6
+    return int(bookSeq)
 
+
+got['bookSequence'] = np.nan
+for count in range(1, got.shape[0]+1):
+    got.loc[count, 'bookSequence'] =   getBookSeq(  got.loc[count, 'book1_A_Game_Of_Thrones'],
+                                                    got.loc[count, 'book2_A_Clash_Of_Kings'],
+                                                    got.loc[count, 'book3_A_Storm_Of_Swords'],
+                                                    got.loc[count, 'book4_A_Feast_For_Crows'],
+                                                    got.loc[count, 'book5_A_Dance_with_Dragons'])
 
 ## Create a varaiable the first book a character has appaeared in
 # Function to create first and last book
 def lastBook(X):
+    print(X)
     if X >= 10**0 & X < 10**1:
         return X%10
     elif X >= 10**1 & X < 10**2:
@@ -279,12 +297,16 @@ def firstBook(X):
     elif (X >= 10**1) & (X < 10**2):
         return int(X/10)
     elif (X >= 10**0) & (X < 10**1):
-        return int(X/10**0)
+        return int(X)
 
 ## create column for first and last book of the character
+got['bookSequence']
+
 got['firstBook'] = got['bookSequence'].apply(lambda X: firstBook(X))
 
-got['lastBook'] = got['bookSequence'].apply(lambda X: lastBook(X))
+got['lastBook'] = got['bookSequence'].apply(lambda X: lastBook(int(X)))
+
+
 
 ## Frequency of characters based on first and last book
 plt.figure(figsize=(30, 18))
@@ -326,11 +348,39 @@ drop_cols.append('isAliveSpouse')
 got.loc[got.index[got['age'] == -277980].tolist()[0], 'age'] = np.nan
 got.loc[got.index[got['age'] == -298001].tolist()[0], 'age'] = np.nan
 
+## Replace all NaN with median agea
+birth_fill = got['age'].median()
+
+## Plot boxplot to see distribution of median age for characters appearing
+## first in variousdifferent volumes of book
+plt.figure(figsize=(30, 20))
+sns.boxenplot(y = 'age', x = 'firstBook', data = got)
+plt.title("Age distribution Boxplot")
+plt.show()
+
+# Creat a list to save median age for each book as start of character appearance
+med_age = np.arange(6)
+## For book volume 1, median age. Population size = 133
+med_age[0] = (got[got['firstBook'] == 1]['age'].dropna().median())
+## For book volume 2, median age. Population size = 134
+med_age[1] = (got[got['firstBook'] == 2]['age'].dropna().median())
+## For book volume 3, median age. Population size = 43
+med_age[1] = (got[got['firstBook'] == 3]['age'].dropna().median())
+## For book volume 4, median age. Population size = 43
+med_age[3] = (got[got['firstBook'] == 4]['age'].dropna().median())
+## For book volume 5, median age. Population size = 13
+med_age[4] = (got[got['firstBook'] == 5]['age'].dropna().median())
+## For book volume 6, median age. Population size = 65
+med_age[5] = (got[got['firstBook'] == 6]['age'].dropna().median())
+
+## Impute age based on first book apapearance era
+for count in range(1, got.shape[0]+1):
+    print(got.loc[count, 'age'])
+    if ((got.loc[count, 'age']) != (got.loc[count, 'age'])):
+        got.loc[count, 'age'] = med_age[got.loc[count, 'firstBook']-1]
 
 plt.figure(figsize=(30, 18))
-# sns.countplot(x = got['firstBook'], hue=)
-sns.scatterplot(x = got['firstBook'], y = got['age'])
-sns
+sns.barplot(x = got['firstBook'], hue = got['age'])
 plt.xlabel("First book character has appeared in")
 plt.ylabel("Character Count")
 plt.title("Lead character first book apperance frequency")
