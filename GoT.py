@@ -217,9 +217,9 @@ for count in range(1, got.shape[0]+1):
 print(got['mod_house'].isnull().any())
 print('Total ', len(got['mod_house'].unique()),' houses')
 
-## Spouse has 92% missing with 255 unique values
-## The spouse which is name of a spouse, may anot have correlationd
-## with model, soo better to drop the colkumn
+## Spouse has 86% missing with 255 (92%) unique values
+## The spouse which is name, may anot have correlation
+## with model, so better to drop the colkumn
 drop_cols.append('spouse')
 
 
@@ -239,6 +239,112 @@ plt.xlabel("Number of books hero appeared in")
 plt.ylabel("Hero Count")
 plt.title("Lead character apperance frequency")
 plt.show()
+
+
+got['firstBook'] = np.nan
+## Create a variable for the sequence of books a character has appaeared in
+got['bookSequence'] =   got['book1_A_Game_Of_Thrones']*10000 + \
+                        got['book2_A_Clash_Of_Kings']*2000 + \
+                        got['book3_A_Storm_Of_Swords']*300 +\
+                        got['book4_A_Feast_For_Crows']*40 +\
+                        got['book5_A_Dance_with_Dragons']*5
+got['bookSequence'] = got['bookSequence'].apply(lambda X: 6 if X == 0 else X)
+
+
+## Create a varaiable the first book a character has appaeared in
+# Function to create first and last book
+def lastBook(X):
+    if X >= 10**0 & X < 10**1:
+        return X%10
+    elif X >= 10**1 & X < 10**2:
+        return X%100
+    elif X >= 10**2 & X < 10**3:
+        return X%1000
+    elif X >= 10**3 & X < 10**4:
+        return X%1000
+    elif X >= 10**4 & X < 10**5:
+        return X%10000
+    elif X >= 10**5 & X < 10**6:
+        return X%100000
+
+def firstBook(X):
+    if ((X >= 10**5) & (X < 10**6)):
+        return int(X/100000)
+    elif (X >= 10**4) & (X < 10**5):
+        return int(X/10000)
+    elif (X >= 10**3) & (X < 10**4):
+        return int(X/1000)
+    elif (X >= 10**2) & (X < 10**3):
+        return int(X/100)
+    elif (X >= 10**1) & (X < 10**2):
+        return int(X/10)
+    elif (X >= 10**0) & (X < 10**1):
+        return int(X/10**0)
+
+## create column for first and last book of the character
+got['firstBook'] = got['bookSequence'].apply(lambda X: firstBook(X))
+
+got['lastBook'] = got['bookSequence'].apply(lambda X: lastBook(X))
+
+## Frequency of characters based on first and last book
+plt.figure(figsize=(30, 18))
+sns.countplot(x = got['firstBook'])
+plt.xlabel("First book character has appeared in")
+plt.ylabel("Character Count")
+plt.title("Lead character first book apperance frequency")
+plt.show()
+
+plt.figure(figsize=(30, 18))
+sns.countplot(x = got['lastBook'])
+plt.xlabel("Last book character has appeared in")
+plt.ylabel("Character Count")
+plt.title("Lead character last book apperance frequency")
+plt.show()
+
+
+
+## isAliveMother has 98.9% missing value. Let us drop in first iteration
+drop_cols.append('isAliveMother')
+
+
+## isAliveFather has 98.7% missing value. Let us drop in first iteration
+drop_cols.append('isAliveFather')
+
+## isAliveHeir has 98.7% missing value. Let us drop in first iteration
+drop_cols.append('isAliveHeir')
+
+## isAliveHeir has 98.7% missing value. Let us drop in first iteration
+drop_cols.append('isAliveSpouse')
+
+## age is a continuous variable and has 77% missing value. 
+## It might prove be a strongly correlated variable and needs 
+## to be imputed
+
+## Found two age for rows 1685 and 1689 wiht values --277980 and -298001
+## shall impute median age at the abnove two values and all missing data
+## replace negatiev age with NaN
+got.loc[got.index[got['age'] == -277980].tolist()[0], 'age'] = np.nan
+got.loc[got.index[got['age'] == -298001].tolist()[0], 'age'] = np.nan
+
+
+plt.figure(figsize=(30, 18))
+# sns.countplot(x = got['firstBook'], hue=)
+sns.scatterplot(x = got['firstBook'], y = got['age'])
+sns
+plt.xlabel("First book character has appeared in")
+plt.ylabel("Character Count")
+plt.title("Lead character first book apperance frequency")
+plt.show()
+
+plt.figure(figsize=(30, 18))
+sns.countplot(x = got['lastBook'])
+plt.xlabel("Last book character has appeared in")
+plt.ylabel("Character Count")
+plt.title("Lead character last book apperance frequency")
+plt.show()
+
+
+
 # selection = ['Ser', 'Stonehelm', 'Prince']
 # count = 0
 # for count in range(0, got.shape[0]):
