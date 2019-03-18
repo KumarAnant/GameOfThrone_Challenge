@@ -8,7 +8,8 @@ import math
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, roc_auc_score
+from sklearn.metrics import roc_curve, auc
 
 
 import os
@@ -526,6 +527,21 @@ predictions = lm.predict(X_test)
 print("Classification report: \n", classification_report(y_test, predictions))
 print("Confusion Matrix:\n", confusion_matrix(y_test, predictions))
 
+## AUC Calculation and plotting
+probs = lm.predict_proba(X_test)
+preds = probs[:,1]
+fpr, tpr, threshold = roc_curve(y_test, preds)
+roc_auc = auc(fpr, tpr)
+plt.figure(figsize=(30, 20))
+plt.title('GoT isAlive Pred Characteristic')
+plt.plot(fpr, tpr, 'b', label = 'LR AUC = %0.2f' % roc_auc)
+plt.legend(loc = 'lower right')
+plt.plot([0, 1], [0, 1],'r--')
+plt.xlim([0, 1])
+plt.ylim([0, 1])
+plt.ylabel('True Positive Rate')
+plt.xlabel('False Positive Rate')
+plt.show()
 
 ###################################
 ######### KNN Model ###############
@@ -563,6 +579,8 @@ pred = knn.predict(X_test)
 print(confusion_matrix(y_test, pred))
 print(classification_report(y_test, pred))
 
+
+
 ## Find value of N for best accuracy
 error_rate = []
 for i in range(1,40):
@@ -598,7 +616,21 @@ pred = knn.predict(X_test)
 print(confusion_matrix(y_test, pred))
 print(classification_report(y_test, pred))
 
-
+## AUC Calculation and plotting
+probs = knn.predict_proba(X_test)
+preds = probs[:,1]
+fpr, tpr, threshold = roc_curve(y_test, preds)
+roc_auc = auc(fpr, tpr)
+plt.figure(figsize=(30, 20))
+plt.title('GoT isAlive Pred Characteristic')
+plt.plot(fpr, tpr, 'b', label = 'KNN AUC = %0.2f' % roc_auc)
+plt.legend(loc = 'lower right')
+plt.plot([0, 1], [0, 1],'r--')
+plt.xlim([0, 1])
+plt.ylim([0, 1])
+plt.ylabel('True Positive Rate')
+plt.xlabel('False Positive Rate')
+plt.show()
 
 ##################################
 ####### Random Forest ############
@@ -632,6 +664,21 @@ predictions = rfc.predict(X_test)
 print(confusion_matrix(y_test, predictions))
 print(classification_report(y_test, predictions))
 
+## AUC Calculation and plotting
+probs = rfc.predict_proba(X_test)
+preds = probs[:,1]
+fpr, tpr, threshold = roc_curve(y_test, preds)
+roc_auc = auc(fpr, tpr)
+plt.figure(figsize=(30, 20))
+plt.title('GoT isAlive Pred Characteristic')
+plt.plot(fpr, tpr, 'b', label = 'RFC AUC = %0.2f' % roc_auc)
+plt.legend(loc = 'lower right')
+plt.plot([0, 1], [0, 1],'r--')
+plt.xlim([0, 1])
+plt.ylim([0, 1])
+plt.ylabel('True Positive Rate')
+plt.xlabel('False Positive Rate')
+plt.show()
 
 #############################################
 ###### Support vector classifier ############
@@ -659,3 +706,49 @@ grid_predictions = grid.predict(X_test)
 print(confusion_matrix(y_test, grid_predictions))
 print(classification_report(y_test, grid_predictions))
 
+
+#############################################
+###### Support vector classifier ############
+#############################################
+
+
+
+from sklearn.ensemble import GradientBoostingClassifier
+
+# Building a weak learner gbm
+gbm = GradientBoostingClassifier(loss = 'deviance',
+                                  learning_rate = 1.5,
+                                  n_estimators = 100,
+                                  max_depth = 3,
+                                  criterion = 'friedman_mse',
+                                  warm_start = False,
+                                  random_state = 508,
+                                  )
+
+
+## Firt the model
+gbm.fit(X_train, y_train)
+
+## Predict for test data
+gbm_basic_predict = gbm.predict(X_test)
+
+
+# Training and Testing Scores
+print('Training Score', gbm.score(X_train, y_train).round(3))
+print('Testing Score:', gbm.score(X_test, y_test).round(3))
+
+## AUC Calculation and plotting
+probs = gbm.predict_proba(X_test)
+preds = probs[:,1]
+fpr, tpr, threshold = roc_curve(y_test, preds)
+roc_auc = auc(fpr, tpr)
+plt.figure(figsize=(30, 20))
+plt.title('GoT isAlive Pred Characteristic')
+plt.plot(fpr, tpr, 'b', label = 'SVC AUC = %0.2f' % roc_auc)
+plt.legend(loc = 'lower right')
+plt.plot([0, 1], [0, 1],'r--')
+plt.xlim([0, 1])
+plt.ylim([0, 1])
+plt.ylabel('True Positive Rate')
+plt.xlabel('False Positive Rate')
+plt.show()
