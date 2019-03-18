@@ -5,6 +5,12 @@ import seaborn as sns
 import math
 
 
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report
+from sklearn.metrics import confusion_matrix
+
+
 import os
 os.chdir('E:/OneDrive/Hult/Machine Learning/Assignments/Assignment - 2')
 got = pd.read_excel('Data/GOT_character_predictions.xlsx', index_col = 0)
@@ -25,7 +31,8 @@ got['culture'].replace(['westerman'], ['westermen'], inplace = True)
 # Correlation Heatmap
 ########################
 # Using palplot to view a color scheme
-sns.palplot(sns.color_palette('coolwarm', 12))
+sns.set(font_scale=2)
+sns.palplot(sns.color_palette('coolwarm', 20))
 fig, ax = plt.subplots(figsize=(30,20)) 
 got2 = got.corr().round(1)
 sns.heatmap(got2,
@@ -34,6 +41,7 @@ sns.heatmap(got2,
             annot = True,
             linecolor = 'black',
             linewidths = 0.5)
+plt.title("Correlation Heat Map")
 plt.show()
 
 
@@ -48,6 +56,7 @@ plt.figure(figsize=(40, 20))
 sns.set(font_scale=2)
 sns.heatmap(got.isnull(), yticklabels=False, cbar=False, cmap='viridis')
 sns.set_style('whitegrid')
+plt.title("Missing Values Heat Map")
 plt.show()
 ## Interpretation of the above graph: Missing values in following columns
                         # title
@@ -121,7 +130,7 @@ for count in range(1, got.shape[0]+1):
     # Copy all other values from original column
     else:
         got.loc[count, 'mod_title'] = got.loc[count, 'title']
-print(got['mod_title'].isnull().any())
+print("Missing value: ", got['mod_title'].isnull().any())
 print('Total ', len(got['mod_title'].unique()),' titles')
 
 ## Once mod_title is ready, add title column in remove list
@@ -144,7 +153,7 @@ for count in range(1, got.shape[0]+1):
     # Copy all other values from original column
     else:
         got.loc[count, 'mod_culture'] = got.loc[count, 'culture']
-print(got['mod_culture'].isnull().any())
+print("Missing value: ", got['mod_culture'].isnull().any())
 print('Total ', len(got['mod_culture'].unique()),' cultures')
 
 ## Once mod_culture is ready, add title column in remove list
@@ -250,7 +259,7 @@ for count in range(1, got.shape[0]+1):
     # Copy all other values from original column
     else:
         got.loc[count, 'mod_house'] = got.loc[count, 'house']
-print(got['mod_house'].isnull().any())
+print("Missing value: ", got['mod_house'].isnull().any())
 print('Total ', len(got['mod_house'].unique()),' houses')
 
 ## Once mod_house is ready, add title column in remove list
@@ -309,8 +318,7 @@ for count in range(1, got.shape[0]+1):
 
 ## Create a varaiable the first book a character has appaeared in
 # Function to create first and last book
-def lastBook(X):
-    print(X)
+def lastBook(X):    
     if X >= 10**0 & X < 10**1:
         return X%10
     elif X >= 10**1 & X < 10**2:
@@ -464,8 +472,7 @@ for count in range(1, got.shape[0]+1):
 ########################
 
 # Cerate a copy of imputed value dataframe
-got_OLS = got.copy()
-
+got_OLS = got.copy(deep = True)
 ## Drop all unnecessary columns, listed in drop_cols column
 for cols in drop_cols:
     print("\n\nDeleting..", cols)
@@ -473,11 +480,24 @@ for cols in drop_cols:
         print("Deleted .. ", cols)
         got_OLS.drop(cols, axis = 1, inplace = True)
 
-
+## Create dummy variables for title column data, drop original column
 title_dummies = pd.get_dummies(list(got_OLS['mod_title']), prefix = 'title', drop_first = True)
-culture_dummies = pd.get_dummies(list(got_OLS['mod_culture']), prefix = 'culture', drop_first = True)
-house_dummies = pd.get_dummies(list(got_OLS['mod_house']), prefix = 'house', drop_first = True)
+title_dummies.index = np.arange(1, len(title_dummies)+1)
+got_OLS.drop('mod_title', axis = 1, inplace = True)
 
+
+## Create dummy variables for culture column data, drop original column
+culture_dummies = pd.get_dummies(list(got_OLS['mod_culture']), prefix = 'culture', drop_first = True)
+culture_dummies.index = np.arange(1, len(culture_dummies)+1)
+got_OLS.drop('mod_culture', axis = 1, inplace = True)
+
+## Create dummy variables for house column data, drop original column
+house_dummies = pd.get_dummies(list(got_OLS['mod_house']), prefix = 'house', drop_first = True)
+house_dummies.index = np.arange(1, len(house_dummies)+1)
+got_OLS.drop('mod_house', axis = 1, inplace = True)
+
+
+## Concatenate dummy variables
 got_OLS = pd.concat(
         [got_OLS.loc[:,:],
             title_dummies,
@@ -485,3 +505,23 @@ got_OLS = pd.concat(
             house_dummies
          ], axis = 1)
 
+
+## Seperate predictor and dependent variables
+X = got_OLS.drop('isAlive', axis = 1)
+X = X.loc[:, :]
+y = got_OLS['isAlive']
+y = y.loc[:]
+
+
+## Train and test data split with stratification
+X_test, X_train, y_test, y_train = train_test_split(X, y, stratify = y, test_size = 0.3)
+lm = LogisticRegression()
+lm.fit(X_train, y_train)
+
+## Predict for the train set data
+predictions = lm.predict(X_test)
+
+# pd.DataFrame(lm.coef_, index = X.columns)
+## Prediction report
+print("Classification report: \n", classification_report(y_test, predictions))
+print("Confusion Matrix:\n", confusion_matrix(y_test, predictions))
