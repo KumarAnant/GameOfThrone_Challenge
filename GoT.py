@@ -525,3 +525,137 @@ predictions = lm.predict(X_test)
 ## Prediction report
 print("Classification report: \n", classification_report(y_test, predictions))
 print("Confusion Matrix:\n", confusion_matrix(y_test, predictions))
+
+
+###################################
+######### KNN Model ###############
+###################################
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+
+## Making data ready for KNN model
+## Brining the target column at the end of dataframe
+df_isAlive = got_OLS.pop('isAlive')
+got_OLS['isAlive'] = df_isAlive
+
+## Scaling the data to normalize
+scaler = StandardScaler()
+scaler.fit(got_OLS.drop(['isAlive'], axis = 1))
+scaled_feature = scaler.transform(got_OLS.drop('isAlive', axis = 1))
+got_feat = pd.DataFrame(scaled_feature, columns=got_OLS.columns[:-1])
+
+## Test and train split of data
+X = got_feat
+y = got['isAlive']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.3, random_state = 508)
+
+## KNN Model intiatiate with N value - 1
+knn = KNeighborsClassifier(n_neighbors=1)
+
+# Fit model
+knn.fit(X_train, y_train)
+
+## Predict data using model fro test dataset
+pred = knn.predict(X_test)
+
+## Model accuracy for N = 1
+print(confusion_matrix(y_test, pred))
+print(classification_report(y_test, pred))
+
+## Find value of N for best accuracy
+error_rate = []
+for i in range(1,40):
+    knn = KNeighborsClassifier(n_neighbors=i)
+    knn.fit(X_train, y_train)
+    pred_i = knn.predict(X_test)
+    error_rate.append(np.mean(y_test != pred_i))
+
+## Plot the accuracy graph
+plt.figure(figsize=(20, 15))
+plt.ylabel('Error Rate')
+plt.xlabel('N-Neighbour Value')
+plt.title("KNN Neighour Optimum Level")
+plt.plot(range(1, 40), error_rate, color = 'blue', 
+                        linestyle = 'dashed', 
+                        marker = 'o', 
+                        markerfacecolor = 'red', 
+                        markersize = 10)
+
+## Accuracy is best for N = 22.
+
+## Build model for N = 22
+## KNN Model intiatiate with N value - 1
+knn = KNeighborsClassifier(n_neighbors=22)
+
+# Fit model
+knn.fit(X_train, y_train)
+
+## Predict data using model fro test dataset
+pred = knn.predict(X_test)
+
+## Model accuracy for N = 22
+print(confusion_matrix(y_test, pred))
+print(classification_report(y_test, pred))
+
+
+
+##################################
+####### Random Forest ############
+##################################
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import export_graphviz
+import pydot
+
+## Creating tree model
+dtree = DecisionTreeClassifier()
+dtree.fit(X_train, y_train)
+
+## Predictions using tree model
+predictions = dtree.predict(X_test)
+
+## Tree model accuracy
+print(confusion_matrix(y_test, predictions))
+print(classification_report(y_test, predictions))
+
+## Random forest model
+rfc = RandomForestClassifier(n_estimators=200)
+## Fit random forest model
+rfc.fit(X_train, y_train)
+
+## Prediction of Random Forest model
+predictions = rfc.predict(X_test)
+
+## Accuracy oif random forest
+print(confusion_matrix(y_test, predictions))
+print(classification_report(y_test, predictions))
+
+
+#############################################
+###### Support vector classifier ############
+#############################################
+from sklearn.model_selection import GridSearchCV
+from sklearn.svm import SVC
+
+model = SVC()
+model.fit(X_train, y_train)
+
+predictions = model.predict(X_test)
+
+print(confusion_matrix(y_test, predictions))
+print(classification_report(y_test, predictions))
+
+param_grid = {'C': [0.1, 1, 10, 100, 1000], 'gamma': [1, 0.1, 0.01, 0.001, 0.00001]}
+
+grid = GridSearchCV(SVC(), param_grid=param_grid, verbose=3)
+grid.fit(X_train, y_train)
+
+grid.best_params_
+grid.best_estimator_
+grid_predictions = grid.predict(X_test)
+
+print(confusion_matrix(y_test, grid_predictions))
+print(classification_report(y_test, grid_predictions))
+
