@@ -10,6 +10,34 @@ os.chdir('E:/OneDrive/Hult/Machine Learning/Assignments/Assignment - 2')
 got = pd.read_excel('Data/GOT_character_predictions.xlsx', index_col = 0)
 got.sort_index(inplace=True)
 
+### Replace some of the mis-spelled entries in culture columns
+got['culture'].replace(['ironmen'], ['ironborn'], inplace = True)
+got['culture'].replace(['braavos'], ['braavosi'], inplace = True)
+got['culture'].replace(['dornishmen', 'dorne'], 'dornish', inplace = True)
+got['culture'].replace(['ghiscaricari'], ['ghiscari'], inplace = True)
+got['culture'].replace(['vale'], ['valemen'], inplace = True)
+got['culture'].replace(['riverlands'], ['rivermen'], inplace = True)
+got['culture'].replace(['the reach', 'reachmen'], 'reach', inplace = True)
+got['culture'].replace(['westerman'], ['westermen'], inplace = True)
+
+
+########################
+# Correlation Heatmap
+########################
+# Using palplot to view a color scheme
+sns.palplot(sns.color_palette('coolwarm', 12))
+fig, ax = plt.subplots(figsize=(30,20)) 
+got2 = got.corr().round(1)
+sns.heatmap(got2,
+            cmap = 'coolwarm',
+            square = True,
+            annot = True,
+            linecolor = 'black',
+            linewidths = 0.5)
+plt.show()
+
+
+
 ## Get some basic information of the dtaframe
 print(got.info())
 print(got.describe())
@@ -78,7 +106,7 @@ drop_cols = []
 ## value wil be replaced with 'Unknown'
 
 title_list = got['title'].value_counts()    
-min_acceptable_title_count = 10
+min_acceptable_title_count = 15
 ## Anything less than the accepted count will be treated 
 ## as "Other" title, to reduct variability of the dataframe. 
 ## Save the transofmed data in column mod_title
@@ -96,10 +124,13 @@ for count in range(1, got.shape[0]+1):
 print(got['mod_title'].isnull().any())
 print('Total ', len(got['mod_title'].unique()),' titles')
 
+## Once mod_title is ready, add title column in remove list
+drop_cols.append('title')
+
 ## column culture is 65% missing with 9% unique records, 
 ## missing value can replaced with 'Unknown' tag
 culture_list = got['culture'].value_counts()
-min_acceptable_culture_count = 10
+min_acceptable_culture_count = 15
 ## Anything less than the accepted count (10) will be treated 
 ## as "Other" culture, to reduct variability of the dataframe. 
 got['mod_culture'] = " "
@@ -116,22 +147,27 @@ for count in range(1, got.shape[0]+1):
 print(got['mod_culture'].isnull().any())
 print('Total ', len(got['mod_culture'].unique()),' cultures')
 
+## Once mod_culture is ready, add title column in remove list
+drop_cols.append('culture')
+
+## Drop the name variable
+drop_cols.append('name')
 ## DateOfBirth being overall 77% missing and also that another
 ## column of Age is already available, the BirthDay column can be dropped
 drop_cols.append('dateOfBirth')
-
+drop_cols.append('m_dateOfBirth')
 ## column mother is 85% missing and it is a qualitative datta
 ## can not be imputed, hence be dropped
 drop_cols.append('mother')
-
+drop_cols.append('m_mother')
 ## column father is 80% missing and it is a qualitative datta
 ## can not be imputed, hence be dropped
 drop_cols.append('father')
-
+drop_cols.append('m_father')
 ## column heir is almost 100% missing and it is a qualitative datta
 ## can not be imputed, hence be dropped
 drop_cols.append('heir')
-
+drop_cols.append('m_heir')
 ## House is 22% missing with 348 unique values
 #### Imputing house data for some characters, sourced from various online
 houses = {   'House Baratheon':  ['Tommen Baratheon', 
@@ -217,11 +253,14 @@ for count in range(1, got.shape[0]+1):
 print(got['mod_house'].isnull().any())
 print('Total ', len(got['mod_house'].unique()),' houses')
 
+## Once mod_house is ready, add title column in remove list
+drop_cols.append('house')
+
 ## Spouse has 86% missing with 255 (92%) unique values
 ## The spouse which is name, may anot have correlation
-## with model, so better to drop the colkumn
+## with model, so better to drop the column
 drop_cols.append('spouse')
-
+drop_cols.append('m_spouse')
 
 ## Create a variable for book number. If the character 
 ## did not appear in any of the book, he/she must have
@@ -299,11 +338,11 @@ def firstBook(X):
     elif (X >= 10**0) & (X < 10**1):
         return int(X)
 
-## create column for first and last book of the character
+# Create columns for sequence of book character has appear in
 got['bookSequence']
 
+## create column for first and last book of the character
 got['firstBook'] = got['bookSequence'].apply(lambda X: firstBook(X))
-
 got['lastBook'] = got['bookSequence'].apply(lambda X: lastBook(int(X)))
 
 
@@ -327,17 +366,17 @@ plt.show()
 
 ## isAliveMother has 98.9% missing value. Let us drop in first iteration
 drop_cols.append('isAliveMother')
-
+drop_cols.append('m_isAliveMother')
 
 ## isAliveFather has 98.7% missing value. Let us drop in first iteration
 drop_cols.append('isAliveFather')
-
+drop_cols.append('m_isAliveFather')
 ## isAliveHeir has 98.7% missing value. Let us drop in first iteration
 drop_cols.append('isAliveHeir')
-
+drop_cols.append('m_isAliveFather')
 ## isAliveHeir has 98.7% missing value. Let us drop in first iteration
 drop_cols.append('isAliveSpouse')
-
+drop_cols.append('m_isAliveSpouse')
 ## age is a continuous variable and has 77% missing value. 
 ## It might prove be a strongly correlated variable and needs 
 ## to be imputed
@@ -358,7 +397,7 @@ sns.boxenplot(y = 'age', x = 'firstBook', data = got)
 plt.title("Age distribution Boxplot")
 plt.show()
 
-# Creat a list to save median age for each book as start of character appearance
+# Creat a list to save median age per book as start of character appearance
 med_age = np.arange(6)
 ## For book volume 1, median age. Population size = 133
 med_age[0] = (got[got['firstBook'] == 1]['age'].dropna().median())
@@ -373,31 +412,76 @@ med_age[4] = (got[got['firstBook'] == 5]['age'].dropna().median())
 ## For book volume 6, median age. Population size = 65
 med_age[5] = (got[got['firstBook'] == 6]['age'].dropna().median())
 
+## Set outlier flag for Age variable
+# print(got['age'].quantile([0.05, 0.93]))
+# print(got['age'].max())
+# print(got['age'].min())
+
+got['o_age'] = 0
+age_up_outlier = 98
+age_low_outlier = 5
+
 ## Impute age based on first book apapearance era
-for count in range(1, got.shape[0]+1):
-    print(got.loc[count, 'age'])
+for count in range(1, got.shape[0]+1):    
     if ((got.loc[count, 'age']) != (got.loc[count, 'age'])):
         got.loc[count, 'age'] = med_age[got.loc[count, 'firstBook']-1]
-
-plt.figure(figsize=(30, 18))
-sns.barplot(x = got['firstBook'], hue = got['age'])
-plt.xlabel("First book character has appeared in")
-plt.ylabel("Character Count")
-plt.title("Lead character first book apperance frequency")
-plt.show()
-
-plt.figure(figsize=(30, 18))
-sns.countplot(x = got['lastBook'])
-plt.xlabel("Last book character has appeared in")
-plt.ylabel("Character Count")
-plt.title("Lead character last book apperance frequency")
-plt.show()
+    elif got.loc[count, 'age'] < age_low_outlier:
+        got.loc[count, 'o_age'] = -1
+    elif got.loc[count, 'age'] > age_up_outlier:
+        got.loc[count, 'o_age'] = 1
 
 
+## numDeadRelations
+## Set outlier flag for numDeadRelations
+# print(got['numDeadRelations'].quantile([0.10, 0.99]))
+got['o_numDeadRelations'] = 0
+numDeadRelations_up_outlier = 7
+numDeadRelations_low_outlier = 0
 
-# selection = ['Ser', 'Stonehelm', 'Prince']
-# count = 0
-# for count in range(0, got.shape[0]):
-#     if got.loc[count, 'title'] not in selection or got.loc[count, 'title'] is 'NaN':
-#         got.loc[count, 'title'] = 'OtherABC'
-# print(got['title'])
+
+## Set outlier flag for popularity
+# print(got['popularity'].quantile([0.10, 0.98]))
+got['o_popularity'] = 0
+popularity_up_outlier = 0.71
+popularity_low_outlier = 0.0067
+
+
+
+## Impute age based on first book apapearance era
+for count in range(1, got.shape[0]+1):    
+    if got.loc[count, 'numDeadRelations'] < numDeadRelations_low_outlier:
+        got.loc[count, 'o_numDeadRelations'] = -1
+    elif got.loc[count, 'numDeadRelations'] > numDeadRelations_up_outlier:
+        got.loc[count, 'o_numDeadRelations'] = 1
+    if got.loc[count, 'popularity'] < popularity_low_outlier:
+        got.loc[count, 'o_popularity'] = -1
+    elif got.loc[count, 'popularity'] > popularity_up_outlier:
+        got.loc[count, 'o_popularity'] = 1
+
+
+########################
+# Creat dummie variables for discrete data
+########################
+
+# Cerate a copy of imputed value dataframe
+got_OLS = got.copy()
+
+## Drop all unnecessary columns, listed in drop_cols column
+for cols in drop_cols:
+    print("\n\nDeleting..", cols)
+    if cols in got_OLS.columns:
+        print("Deleted .. ", cols)
+        got_OLS.drop(cols, axis = 1, inplace = True)
+
+
+title_dummies = pd.get_dummies(list(got_OLS['mod_title']), prefix = 'title', drop_first = True)
+culture_dummies = pd.get_dummies(list(got_OLS['mod_culture']), prefix = 'culture', drop_first = True)
+house_dummies = pd.get_dummies(list(got_OLS['mod_house']), prefix = 'house', drop_first = True)
+
+got_OLS = pd.concat(
+        [got_OLS.loc[:,:],
+            title_dummies,
+            culture_dummies,
+            house_dummies
+         ], axis = 1)
+
