@@ -444,7 +444,7 @@ med_age[0] = (got[got['firstBook'] == 1]['age'].dropna().median())
 ## For book volume 2, median age. Population size = 134
 med_age[1] = (got[got['firstBook'] == 2]['age'].dropna().median())
 ## For book volume 3, median age. Population size = 43
-med_age[1] = (got[got['firstBook'] == 3]['age'].dropna().median())
+med_age[2] = (got[got['firstBook'] == 3]['age'].dropna().median())
 ## For book volume 4, median age. Population size = 43
 med_age[3] = (got[got['firstBook'] == 4]['age'].dropna().median())
 ## For book volume 5, median age. Population size = 13
@@ -546,7 +546,7 @@ y = y.loc[:]
 
 
 ## Train and test data split with stratification
-X_test, X_train, y_test, y_train = train_test_split(X, y, stratify = y, 
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, 
                                                     test_size = 0.1,
                                                     random_state = 508)
 lm = LogisticRegression()
@@ -708,6 +708,14 @@ predictions = dtree.predict(X_test)
 print(confusion_matrix(y_test, predictions))
 print(classification_report(y_test, predictions))
 
+cv_DTree_3 = cross_val_score(dtree,
+                          X,
+                          y,
+                          cv = 3)
+
+print("Cross validation score of RFC: ", (pd.np.mean(cv_DTree_3)).round(3))
+
+
 ## Random forest model
 rfc = RandomForestClassifier(n_estimators=200)
 ## Fit random forest model
@@ -837,3 +845,10 @@ plt.ylim([0, 1])
 plt.ylabel('True Positive Rate')
 plt.xlabel('False Positive Rate')
 plt.show()
+
+print("Cross validation score of LR: ", (pd.np.mean(cv_lr_3).round(3)))
+print("Cross validation score of KNN: ", (pd.np.mean(cv_knn_3).round(3)))
+print("Cross validation score of Tree: ", (pd.np.mean(cv_DTree_3)).round(3))
+print("Cross validation score of RFC: ", (pd.np.mean(cv_RandFor_3)).round(3))
+print("Cross validation score of SVC: ", (pd.np.mean(cv_SVC_3)).round(3))
+print("Cross validation score of GBC: ", (pd.np.mean(cv_GBC_3)).round(3))
